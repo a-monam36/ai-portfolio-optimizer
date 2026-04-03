@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Fitness AI Coach",
+    "slug": "fitness-ai-coach",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "fitnessaicoach",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourname.fitnessaicoach"
+    },
+    "android": {
+      "package": "com.yourname.fitnessaicoach",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "INTERNET",
+        "VIBRATE"
+      ],
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-haptics"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
