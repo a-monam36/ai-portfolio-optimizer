@@ -2,6 +2,9 @@
 pandas
 numpy
 yfinance
+pandas-datareader
+lxml
+html5lib
 
 # Technical Analysis and ML
 pandas-ta-classic
@@ -11,3 +14,7 @@ statsmodels
 # Optimization and Charts
 PyPortfolioOpt
 matplotlib
+
+# Web App and AI
+streamlit
+google-generativeai
