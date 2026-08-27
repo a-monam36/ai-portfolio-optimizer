@@ -2,7 +2,7 @@
 
 An end-to-end quantitative trading dashboard that utilizes unsupervised machine learning to cluster S&P 500 equities and Generative AI to provide personalized portfolio analysis. 
 
-[**View Live Application**](https://your-streamlit-url-here.streamlit.app)
+[**View Live Application**](https://ai-portfolio-optimizer-monam.streamlit.app/)
 
 This application dynamically pulls financial data, engineers technical and macroeconomic features, optimizes asset weights, and backtests the strategy against major market benchmarks.
 
