@@ -18,7 +18,7 @@ genai.configure(api_key=GOOGLE_API_KEY)
 MODEL_NAME = "gemini-3.6-flash"
 gen_model = genai.GenerativeModel(MODEL_NAME)
 
-
+@st.cache_data(show_spinner=False)
 def run_ai_advisor(final_data, weights, budget, risk, max_stocks):
     try:
         # 1. Prepare data (Keep it light to save tokens)
@@ -34,6 +34,7 @@ def run_ai_advisor(final_data, weights, budget, risk, max_stocks):
         Analyze this Cluster 0 portfolio for a ${budget} investment ({risk} risk).
         Weights: {latest_weights.to_dict()}
         Technical Context: {context_df.to_dict()}
+        Context Note: Technical indicators like RSI are Z-score normalized for machine learning. A value of +1.0 means 1 standard deviation above the mean. Explain this simply if referencing raw indicator values.
         
         Provide a 3-bullet point investment plan and a risk warning.
         """
@@ -159,25 +160,15 @@ if run_pipeline:
         st.write("Step 9: Optimizing Portfolio & Backtesting...")
         portfolio_results, latest_weights = stocks.portfolio_optimization(final_data, fixed_dates, max_weight = max_weight /100, lookback = lookback_months)
 
-        st.session_state.latest_weights = latest_weights 
-        st.session_state.final_comparison = stocks.portfolio_visual(portfolio_results, benchmark_ticker)
-
         st.write("Step 10: Comparing against Benchmark...")
         final_comparison = stocks.portfolio_visual(portfolio_results, benchmark_ticker)
-        st.session_state.final_comparison = final_comparison
-        st.session_state.latest_weights = latest_weights
 
-
-
+        # Save everything to memory exactly ONCE
         st.session_state.final_data = final_data
         st.session_state.all_charts = all_charts
         st.session_state.portfolio_results = portfolio_results
         st.session_state.final_comparison = final_comparison
-
-
-
-
-        
+        st.session_state.latest_weights = latest_weights
         
         status.update(label="Completed!", state="complete", expanded=False)
 
@@ -191,27 +182,37 @@ if st.session_state.final_data is not None:
     chart_index = st.slider("Historical Cluster Evolution", 0, len(all_charts)-1, len(all_charts)-1)
     st.pyplot(all_charts[chart_index])
 
-    # 4.2 Performance Graph
+# 4.2 Performance Graph & Metrics
     if st.session_state.final_comparison is not None:
         st.divider()
         st.subheader(f"📈 Performance: Strategy vs. {select_label}")
 
-        with st.container(border=True):
+        perf_data = st.session_state.final_comparison
+        
+        # 1. Dynamically find the correct column names
+        strat_col = [c for c in perf_data.columns if 'strategy' in c.lower() or 'weighted' in c.lower()][0]
+        bench_col = [c for c in perf_data.columns if 'benchmark' in c.lower() or 'market' in c.lower()][0]
+        
+        # 2. Calculate Cumulative Return (undoing the log returns)
+        cumulative_ret = np.exp(perf_data.cumsum()) - 1
+        
+        # Grab the very last row's value and convert to percentage
+        strat_total = cumulative_ret[strat_col].iloc[-1] * 100
+        bench_total = cumulative_ret[bench_col].iloc[-1] * 100
+        outperformance = strat_total - bench_total
 
+        # 3. Display the Metrics in 3 neat columns
+        col1, col2, col3 = st.columns(3)
+        col1.metric(label="Strategy Total Return", value=f"{strat_total:.2f}%")
+        col2.metric(label="Benchmark Total Return", value=f"{bench_total:.2f}%")
+        
+        # Display the difference (Green if positive, Red if negative via Streamlit's built-in delta coloring)
+        col3.metric(label="Outperformance", value=f"{outperformance:.2f}%", delta=f"{outperformance:.2f}%")
+
+        # 4. Display the Graph inside a neat border
+        with st.container(border=True):
             fig = stocks.plot_port(st.session_state.final_comparison)
             st.pyplot(fig)
-        
-        # perf_data = st.session_state.final_comparison
-        # # Undo Log Returns for Cumulative Growth
-        # cumulative_ret = np.exp(perf_data.cumsum()) - 1
-        
-        # fig, ax = plt.subplots(figsize=(16, 7))
-        # cumulative_ret.plot(ax=ax)
-        
-        # ax.set_title(f"Cumulative Return History", fontsize=14)
-        # ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-        # ax.set_ylabel("Growth (%)")
-        # st.pyplot(fig)
 
 
     st.divider()
@@ -228,7 +229,7 @@ if st.session_state.final_data is not None:
                     user_risk, 
                     max_stocks=5 # Or use a fixed number of stocks
                 )
-                st.markdown(advice)
+                st.markdown(advice.replace("$", r"\$"))
 
     # 4.3 Data and Download
     st.divider()
