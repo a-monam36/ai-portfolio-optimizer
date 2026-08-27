@@ -86,7 +86,10 @@ st.sidebar.divider()
 
 st.sidebar.subheader("Backtest Settings")
 
-max_weight = st.sidebar.slider("Max Stock Weight (%)", 5, 50, 10) # description, min, max, default
+
+show_sharpe = st.sidebar.toggle("Show Sharpe Ratio", value=True, help="Displays the risk-adjusted return metric above the chart.")
+
+max_weight = st.sidebar.slider("Max Stock Weight (%)", 5, 50, 10)
 
 lookback_months = st.sidebar.select_slider("Optimization Lookback (Months)", options=[6, 12, 24], value=12)
 
@@ -193,27 +196,35 @@ if st.session_state.final_data is not None:
         strat_col = [c for c in perf_data.columns if 'strategy' in c.lower() or 'weighted' in c.lower()][0]
         bench_col = [c for c in perf_data.columns if 'benchmark' in c.lower() or 'market' in c.lower()][0]
         
-        # 2. Calculate Cumulative Return (undoing the log returns)
+        # 2. Calculate Cumulative Return
         cumulative_ret = np.exp(perf_data.cumsum()) - 1
-        
-        # Grab the very last row's value and convert to percentage
         strat_total = cumulative_ret[strat_col].iloc[-1] * 100
         bench_total = cumulative_ret[bench_col].iloc[-1] * 100
         outperformance = strat_total - bench_total
 
-        # 3. Display the Metrics in 3 neat columns
-        col1, col2, col3 = st.columns(3)
-        col1.metric(label="Strategy Total Return", value=f"{strat_total:.2f}%")
-        col2.metric(label="Benchmark Total Return", value=f"{bench_total:.2f}%")
-        
-        # Display the difference (Green if positive, Red if negative via Streamlit's built-in delta coloring)
-        col3.metric(label="Outperformance", value=f"{outperformance:.2f}%", delta=f"{outperformance:.2f}%")
+        # 3 & 4. Display Metrics
+        if show_sharpe:
+            # Calculate Sharpe
+            strat_mean = perf_data[strat_col].mean()
+            strat_std = perf_data[strat_col].std()
+            sharpe_ratio = (strat_mean / strat_std) * np.sqrt(12)
 
-        # 4. Display the Graph inside a neat border
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric(label="Strategy Total Return", value=f"{strat_total:.0f}%")
+            col2.metric(label="Benchmark Total", value=f"{bench_total:.0f}%")
+            col3.metric(label="Outperformance", value=f"{outperformance:.0f}%", delta=f"{outperformance:.0f}%")
+            col4.metric(label="Strategy Sharpe", value=f"{sharpe_ratio:.2f}", help="Above 1.0 is Good. Above 2.0 is Excellent.")
+        else:
+            # Just show the basic 3 columns
+            col1, col2, col3 = st.columns(3)
+            col1.metric(label="Strategy Total Return", value=f"{strat_total:.0f}%")
+            col2.metric(label="Benchmark Total", value=f"{bench_total:.0f}%")
+            col3.metric(label="Outperformance", value=f"{outperformance:.0f}%", delta=f"{outperformance:.0f}%")
+
+        # 5. Display the Graph inside a neat border
         with st.container(border=True):
             fig = stocks.plot_port(st.session_state.final_comparison)
             st.pyplot(fig)
-
 
     st.divider()
     st.subheader("🤖 AI Portfolio Commentary")
@@ -221,15 +232,17 @@ if st.session_state.final_data is not None:
     with st.expander("Click to generate AI Investment Plan", expanded=True):
         if st.button("Generate Advice"):
             with st.spinner("Gemini is analyzing your engine's output..."):
-            # We use the session state data so we don't have to rerun the whole math engine
                 advice = run_ai_advisor(
                     st.session_state.final_data, 
-                    st.session_state.latest_weights, # This contains the strategy returns/weights
+                    st.session_state.latest_weights, 
                     user_budget, 
                     user_risk, 
-                    max_stocks=5 # Or use a fixed number of stocks
+                    max_stocks=5 
                 )
+                # The fixed dollar sign string!
                 st.markdown(advice.replace("$", r"\$"))
+
+
 
     # 4.3 Data and Download
     st.divider()
