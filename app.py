@@ -15,7 +15,7 @@ except:
     st.stop()
 
 genai.configure(api_key=GOOGLE_API_KEY)
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = "gemini-3.6-flash"
 gen_model = genai.GenerativeModel(MODEL_NAME)
 
 
