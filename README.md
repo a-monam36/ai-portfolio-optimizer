@@ -1,4 +1,4 @@
-# 📈 Quant-Alpha-Engine
+# 📈 AI Portfolio Optimizer
 
 An end-to-end quantitative trading dashboard that utilizes unsupervised machine learning to cluster S&P 500 equities and Generative AI to provide personalized portfolio analysis. 
 
