@@ -382,7 +382,7 @@ def portfolio_optimization(data, fixed_dates, max_weight=0.1, lookback=12):
                                          index=optimization_df.columns.tolist(), 
                                          columns=pd.Series(0)).T
 
-# 5. Performance Calculation
+            # Performance Calculation
             temp_df = returns_df[start_date:end_date][valid_cols]
 
             # Stack returns into long format
@@ -410,41 +410,7 @@ def portfolio_optimization(data, fixed_dates, max_weight=0.1, lookback=12):
 
     return portfolio_df.drop_duplicates(), weights 
 
-# def portfolio_visual(portfolio_df, ticker):
-#     # 1. Download the benchmark data
-#     # We download from the start of your strategy data to the end
-#     spy = yf.download(tickers=ticker, start=portfolio_df.index.min(), end=portfolio_df.index.max(), auto_adjust=False)
 
-#     # Standardize column names to lowercase to avoid KeyErrors
-#     if isinstance(spy.columns, pd.MultiIndex):
-#         spy.columns = spy.columns.set_levels(spy.columns.levels[0].str.lower(), level=0)
-#     else:
-#         spy.columns = spy.columns.str.lower()
-
-#     # 2. Isolate the price data safely
-#     spy_prices = spy['adj close'] if 'adj close' in spy.columns else spy['close']
-
-#     # 3. Calculate log returns
-#     spy_ret = np.log(spy_prices).diff().dropna()
-
-#     # 4. Handle Type (Fixes the AttributeError)
-#     if isinstance(spy_ret, pd.Series):
-#         spy_ret = spy_ret.to_frame('Market Benchmark')
-#     else:
-#         spy_ret.columns = ['Market Benchmark']
-
-#     # 5. Resample to Monthly (Fixes the Empty Chart)
-#     # This sums daily log returns into monthly ones to match your strategy
-#     spy_ret = spy_ret.resample('ME').sum()
-
-#     # 6. Ensure indexes are both Datetime objects for a clean merge
-#     portfolio_df.index = pd.to_datetime(portfolio_df.index).to_period('M').to_timestamp('M')
-#     spy_ret.index = pd.to_datetime(spy_ret.index).to_period('M').to_timestamp('M')
-
-#     # 7. Final Merge (Use 'left' join to keep all strategy data)
-#     portfolio_df = portfolio_df.merge(spy_ret, left_index=True, right_index=True, how='left')
-
-#     return portfolio_df
 
 def portfolio_visual(portfolio_df, ticker):
     
@@ -515,25 +481,3 @@ def plot_port(portfolio_df):
 
     return fig
         
-
-
-
-
-
-
-   
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
-# %%
