@@ -1,6 +1,12 @@
+
+
 # 📈 AI Portfolio Optimizer
 
 An end-to-end quantitative trading dashboard that utilizes unsupervised machine learning to cluster S&P 500 equities and Generative AI to provide personalized portfolio analysis. 
+
+
+https://github.com/user-attachments/assets/d7ef3138-ac7a-4e90-8995-938c3308cb61
+
 
 [**View Live Application**](https://ai-portfolio-optimizer-monam.streamlit.app/)
 
