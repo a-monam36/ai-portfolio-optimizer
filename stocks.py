@@ -57,19 +57,25 @@ def calculate_metrics(factor_data, use_rsi, use_gk, use_bb, use_atr, use_macd):
   if use_rsi:
     def compute_rsi(x):
       rsi = pandas_ta.rsi(close=x, length=20)
-      return rsi.sub(rsi.mean()).div(rsi.std())
+      if rsi is None or rsi.empty:
+        return pd.Series(np.nan, index=x.index)
+      std = rsi.std()
+      if pd.isna(std) or std == 0:
+        return pd.Series(np.nan, index=x.index)
+      return rsi.sub(rsi.mean()).div(std)
     factor_data['rsi'] = factor_data.groupby(level=1)['adj close'].transform(compute_rsi)
 
   # bollinger bands for 20 days
   if use_bb:
     def compute_bbands(x):
       bands = pandas_ta.bbands(close=np.log1p(x), length=20)
-
-      return bands.iloc[:, 0:3] # calculate high mid and low 
+      if bands is None or bands.empty:
+        return pd.DataFrame(np.nan, index=x.index, columns=['bb_low', 'bb_mid', 'bb_high'])
+      res = bands.iloc[:, 0:3].copy()
+      res.columns = ['bb_low', 'bb_mid', 'bb_high']
+      return res
 
     bbands_factor_data = factor_data.groupby(level=1, group_keys=False)['adj close'].apply(compute_bbands)
-
-    bbands_factor_data.columns = ['bb_low', 'bb_mid', 'bb_high']
 
     factor_data = factor_data.join(bbands_factor_data)
 
@@ -83,22 +89,32 @@ def calculate_metrics(factor_data, use_rsi, use_gk, use_bb, use_atr, use_macd):
       if high.isnull().all() or low.isnull().all() or close.isnull().all():
         return pd.Series(np.nan, index=stock_data.index)
 
-      atr = pandas_ta.atr(high= high, low=low, close= close, length=14)
+      atr = pandas_ta.atr(high=high, low=low, close=close, length=14)
 
-      if atr.isnull().all():
+      if atr is None or atr.isnull().all():
         return pd.Series(np.nan, index=stock_data.index)
 
-      return atr.sub(atr.mean()).div(atr.std()) # (x- mean)/ sd = z 
+      std = atr.std()
+      if pd.isna(std) or std == 0:
+        return pd.Series(np.nan, index=stock_data.index)
+
+      return atr.sub(atr.mean()).div(std) # (x- mean)/ sd = z 
 
     factor_data['atr'] = factor_data.groupby(level=1, group_keys=False).apply(compute_atr)
 
-  #macd for 20 days
+  #macd
   if use_macd:
     def compute_macd(close):
-        macd = pandas_ta.macd(close=close, length=20).iloc[:,0] # ignore histogram and signal just use macd
-        return macd.sub(macd.mean()).div(macd.std())
+      macd = pandas_ta.macd(close=close)
+      if macd is None or macd.empty:
+        return pd.Series(np.nan, index=close.index)
+      macd_line = macd.iloc[:, 0] # ignore histogram and signal just use macd
+      std = macd_line.std()
+      if pd.isna(std) or std == 0:
+        return pd.Series(np.nan, index=close.index)
+      return macd_line.sub(macd_line.mean()).div(std)
 
-    factor_data['macd'] = factor_data.groupby(level=1, group_keys= False)['adj close'].apply(compute_macd)
+    factor_data['macd'] = factor_data.groupby(level=1, group_keys=False)['adj close'].apply(compute_macd)
 
   #dollar volume per million
   factor_data['dollar_volume'] = (factor_data['adj close']*factor_data['volume'])/1e6
