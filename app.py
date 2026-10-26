@@ -65,8 +65,8 @@ if 'final_comparison' not in st.session_state:
 
 
 
-st.set_page_config(page_title="Quant Strategy Sandbox", layout= "wide")
-st.title("🛠️ Strategy Feature Engine")
+st.set_page_config(page_title="AI Portfolio Optimizer", layout="wide")
+st.title("📈 AI Portfolio Optimizer")
 
 st.sidebar.header("Toggle Indicators")
 
